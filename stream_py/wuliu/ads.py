@@ -398,29 +398,20 @@ def main():
     load_and_verify("ads_express_stats", insert_sql)
     # 5.7 车辆类型维度表：ads_line_stats
     insert_sql = f"""
-   INSERT INTO TABLE ads_line_stats
-SELECT 
-    '{date}' AS dt, 
-    line_id,
-    line_name,
-    SUM(trans_finish_count) AS trans_finish_count,
-    SUM(trans_finish_distance) AS trans_finish_distance,
-    SUM(trans_finish_dur_sec) AS trans_finish_dur_sec,
-    SUM(trans_finish_order_count) AS trans_finish_order_count
-FROM (
-    SELECT 
-        recent_days,
+    insert into ads_line_stats
+    select 
+        '{date}' as dt,  -- 统一日期参数引用格式
+        recent_days,     -- 调整到第二字段
         line_id,
         line_name,
-        trans_finish_count,
-        trans_finish_distance,
-        trans_finish_dur_sec,
-        trans_finish_order_count
-    FROM dws_trans_shift_trans_finish_nd 
-    WHERE dt = '{date}'
-) t
-GROUP BY recent_days, line_id, line_name;  
-
+        sum(trans_finish_count) as trans_finish_count,
+        sum(trans_finish_distance) as trans_finish_distance,
+        sum(trans_finish_dur_sec) as trans_finish_dur_sec,
+        sum(trans_finish_order_count) as trans_finish_order_count
+    from dws_trans_shift_trans_finish_nd
+    where dt = '{date}'  -- 保持日期过滤条件
+    -- 调整分组顺序以匹配SELECT字段顺序：
+    group by recent_days, line_id, line_name;
     
        """
     load_and_verify("ads_line_stats", insert_sql)

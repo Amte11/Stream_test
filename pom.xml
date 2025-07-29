@@ -12,6 +12,7 @@
         <module>stream_common</module>
         <module>stream_realtime</module>
         <module>custom_unc</module>
+        <module>offline_task</module>
     </modules>
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

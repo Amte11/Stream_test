@@ -208,5 +208,3 @@ FROM (
          ORDER BY rank_num ASC
              LIMIT 20
      ) t;
-
-select  * from ads_pc_source_top20_kpi;

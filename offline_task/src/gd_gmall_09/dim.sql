@@ -328,7 +328,7 @@ SELECT
     a.relation_type,
     a.create_time,
     a.start_date,
-    '2025-07-30' AS end_date,
+    '2025-07-31' AS end_date,
     0 AS is_current
 FROM dim_page_relationship a
          JOIN ods_page_relationship b

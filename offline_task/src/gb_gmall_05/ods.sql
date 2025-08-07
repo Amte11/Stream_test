@@ -22,7 +22,7 @@ CREATE TABLE ods_user_behavior_log (
     COMMENT '用户行为日志表-核心事实表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_user_behavior_log/'
+location '/warehouse/gmall_05/ods/ods_user_behavior_log/'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );
@@ -42,10 +42,12 @@ CREATE TABLE ods_order_trade_fact (
     COMMENT '订单交易事实表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_order_trade_fact/'
+location '/warehouse/gmall_05/ods/ods_order_trade_fact/'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );
+
+select count(1) from ods_order_trade_fact;
 --3. 订单商品明细表（ods_order_goods_detail）
 CREATE TABLE ods_order_goods_detail (
                                         detail_id       STRING      COMMENT '明细项ID',
@@ -59,7 +61,7 @@ CREATE TABLE ods_order_goods_detail (
     COMMENT '订单商品明细表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_order_goods_detail/'
+location '/warehouse/gmall_05/ods/ods_order_goods_detail/'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );
@@ -81,7 +83,7 @@ CREATE TABLE ods_goods_core_attr (
     COMMENT '商品核心属性表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_goods_core_attr/'
+location '/warehouse/gmall_05/ods/ods_goods_core_attr/'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );
@@ -98,7 +100,7 @@ CREATE TABLE ods_shop_base_info (
     COMMENT '店铺基础信息表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_shop_base_info/'
+location '/warehouse/gmall_05/ods/ods_shop_base_info/'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );
@@ -114,7 +116,7 @@ CREATE TABLE ods_user_base_info (
     COMMENT '用户基础信息表'
 PARTITIONED BY (dt STRING COMMENT '日期分区 yyyyMMdd')
 STORED AS ORC
-location '/warehouse/gmall_05/ods_user_base'
+location '/warehouse/gmall_05/ods/ods_user_base'
 TBLPROPERTIES (
     'orc.compress' = 'SNAPPY'
 );

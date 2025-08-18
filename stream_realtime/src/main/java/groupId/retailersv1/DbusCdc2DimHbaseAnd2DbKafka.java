@@ -47,6 +47,7 @@ public class DbusCdc2DimHbaseAnd2DbKafka {
                 "",
                 ConfigUtils.getString("mysql.user"),
                 ConfigUtils.getString("mysql.pwd"),
+                "2889-2990",
                 StartupOptions.initial()
         );
 
@@ -56,12 +57,15 @@ public class DbusCdc2DimHbaseAnd2DbKafka {
                 "realtime_v1_config.table_process_dim",
                 ConfigUtils.getString("mysql.user"),
                 ConfigUtils.getString("mysql.pwd"),
+                "5672-5884",
                 StartupOptions.initial()
         );
 
         DataStreamSource<String> cdcDbMainStream = env.fromSource(mySQLDbMainCdcSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_main_source");
         DataStreamSource<String> cdcDbDimStream = env.fromSource(mySQLCdcDimConfSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_dim_source");
 
+//        cdcDbMainStream.print("cdcDbMainStream -> ");
+//        cdcDbDimStream.print("cdcDbDimStream -> ");
         SingleOutputStreamOperator<JSONObject> cdcDbMainStreamMap = cdcDbMainStream.map(JSONObject::parseObject)
                 .uid("db_data_convert_json")
                 .name("db_data_convert_json")

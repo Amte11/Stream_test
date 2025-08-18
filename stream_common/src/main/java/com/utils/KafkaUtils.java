@@ -94,7 +94,7 @@ public final class KafkaUtils {
         }
     }
 
-    public static KafkaSource<String> buildKafkaSource(String bootServerList,String kafkaTopic,String group,OffsetsInitializer offset){
+    public static KafkaSource<String> buildKafkaSource(String bootServerList,String kafkaTopic,String group ,OffsetsInitializer offset){
         return KafkaSource.<String>builder()
                 .setBootstrapServers(bootServerList)
                 .setTopics(kafkaTopic)

@@ -8,9 +8,13 @@ import com.utils.KafkaUtils;
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import groupId.retailersv1.func.MapUpdateHbaseDimTableFunc;
+import groupId.retailersv1.func.ProcessSpiltStreamToHBaseDimFunc;
 import groupId.retailersv1.stream.utils.CdcSourceUtils;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.streaming.api.datastream.BroadcastConnectedStream;
+import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -105,12 +109,12 @@ public class DbusCdc2DimHbaseAnd2DbKafka {
 //        cdcDbDimStreamMapCleanColumn.print();
 
 
-//
-//        MapStateDescriptor<String, JSONObject> mapStageDesc = new MapStateDescriptor<>("mapStageDesc", String.class, JSONObject.class);
-//        BroadcastStream<JSONObject> broadcastDs = tpDS.broadcast(mapStageDesc);
-//        BroadcastConnectedStream<JSONObject, JSONObject> connectDs = cdcDbMainStreamMap.connect(broadcastDs);
-//
-//        connectDs.process(new ProcessSpiltStreamToHBaseDimFunc(mapStageDesc));
+
+        MapStateDescriptor<String, JSONObject> mapStageDesc = new MapStateDescriptor<>("mapStageDesc", String.class, JSONObject.class);
+        BroadcastStream<JSONObject> broadcastDs = tpDS.broadcast(mapStageDesc);
+        BroadcastConnectedStream<JSONObject, JSONObject> connectDs = cdcDbMainStreamMap.connect(broadcastDs);
+
+        connectDs.process(new ProcessSpiltStreamToHBaseDimFunc(mapStageDesc));
 
 
 

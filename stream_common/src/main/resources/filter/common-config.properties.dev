@@ -25,16 +25,23 @@ kafka.start.log=start_log
 kafka.display.log=display_log
 kafka.action.log=action_log
 kafka.page.topic=ods_page_log
+kafka.cdc.db.topic=ods_all_cdc
+kafka.dwd.comment.info=dwd_comment_info
+kafka.dwd.cart.info=dwd_cart_info
+kafka.dwd.trade.order.detail=dwd_trade_order_detail
+kafka.dwd.trade.order.cancel.detail=dwd_trade_order_cancel_detail
+kafka.dwd.trade.order.pay.suc.detail=dwd_trade_order_pay_suc_detail
+kafka.dwd.trade.order.refund=dwd_trade_order_refund
+kafka.dwd.trade.refund.pay.suc.detail=dwd_trade_refund_pay_suc_detail
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=cdh01:2181
 
 # Hbase
-hbase.namespace=default
+hbase.namespace=realtime
 
 # 暂时不用的服务可留空或注释
 holo.endpoint=
 ali.key=
 ali.pwd=
 
-kafka.cdc.db.topic=ods_all_cdc

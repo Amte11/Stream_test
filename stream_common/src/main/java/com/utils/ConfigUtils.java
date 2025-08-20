@@ -34,6 +34,7 @@ public final class ConfigUtils {
         return properties.getProperty(key).trim();
     }
 
+
     public static int getInt(String key) {
         String value = properties.getProperty(key).trim();
         return Integer.parseInt(value);

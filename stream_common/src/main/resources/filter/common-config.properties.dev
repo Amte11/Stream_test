@@ -33,6 +33,8 @@ kafka.dwd.trade.order.cancel.detail=dwd_trade_order_cancel_detail
 kafka.dwd.trade.order.pay.suc.detail=dwd_trade_order_pay_suc_detail
 kafka.dwd.trade.order.refund=dwd_trade_order_refund
 kafka.dwd.trade.refund.pay.suc.detail=dwd_trade_refund_pay_suc_detail
+kafka.dwd.trade.order.detail.activity=dwd_trade_order_detail_activity
+kafka.dwd.trade.order.detail.coupon=dwd_trade_order_detail_coupon
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=cdh01:2181
@@ -45,3 +47,4 @@ holo.endpoint=
 ali.key=
 ali.pwd=
 
+hive.conf.dir=C:\2210A\work1\Stream_test\stream_realtime\src\main\resources

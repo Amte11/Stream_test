@@ -3,11 +3,10 @@ package groupId.retailersv1.dwd;
 import com.utils.ConfigUtils;
 import com.utils.EnvironmentSettingUtils;
 import com.utils.SqlUtil;
+import org.apache.flink.runtime.state.memory.MemoryStateBackend;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-
-import java.time.Duration;
 
 /**
  * Title: DbusDwdTradeOrderRefundToKafka
@@ -27,10 +26,11 @@ public class DbusDwdTradeOrderRefundToKafka {
 
 
         StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
-        tableEnv.getConfig().setIdleStateRetention(Duration.ofSeconds(10));
+        env.setStateBackend(new MemoryStateBackend());
 
 
-        tableEnv.executeSql("CREATE TABLE ods_ecommerce_order (\n" +
+
+        tableEnv.executeSql("CREATE TABLE ods_all_cdc (\n" +
                 "  `op` STRING,\n" +
                 "  `before` MAP<STRING,STRING>,\n" +
                 "  `after` MAP<STRING,STRING>,\n" +
@@ -65,7 +65,7 @@ public class DbusDwdTradeOrderRefundToKafka {
                         "`after`['create_time'] create_time," +
                         "proc_time," +
                         "ts_ms " +
-                        "from ods_ecommerce_order " +
+                        "from ods_all_cdc " +
                         "where `source`['table'] ='order_refund_info' ");
         tableEnv.createTemporaryView("order_refund_info", orderRefundInfo);
 
@@ -76,7 +76,7 @@ public class DbusDwdTradeOrderRefundToKafka {
                 "select " +
                         "`after`['id'] id," +
                         "`after`['province_id'] province_id " +
-                        " from ods_ecommerce_order " +
+                        " from ods_all_cdc " +
                         "where `source`['table']='order_info' " +
                         "and `before`['order_status'] is not null " +
                         "and `after`['order_status']='1005' ");
@@ -110,7 +110,7 @@ public class DbusDwdTradeOrderRefundToKafka {
                         "join base_dic for system_time as of ri.proc_time as dic2 " +
                         "on ri.refund_reason_type=dic2.dic_code ");
 
-//        result.execute().print();
+        result.execute().print();
 
         // 5. 写出到 kafka
         tableEnv.executeSql(
@@ -133,6 +133,6 @@ public class DbusDwdTradeOrderRefundToKafka {
                         "primary key(id) not enforced " +
                         ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_REFUND));
 
-        result.executeInsert(DWD_TRADE_ORDER_REFUND);
+        ///result.executeInsert(DWD_TRADE_ORDER_REFUND);
     }
 }

@@ -40,7 +40,7 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "retailersv_dwd_trade_payment_success"));
         // 1. 读取下单事务事实表
         tableEnv.executeSql(
-                "create table dwd_trade_order_detail(" +
+                "create table dwd_order_info(" +
                         "id string," +
                         "order_id string," +
                         "user_id string," +
@@ -79,7 +79,7 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                 "and `after`['payment_status']='1602' ");
         tableEnv.createTemporaryView("payment_info", paymentInfo);
 
-//        paymentInfo.execute().print();
+        //paymentInfo.execute().print();
 
         //3 从 hbase 中读取 字典数据 创建 字典表
         tableEnv.executeSql("CREATE TABLE base_dic (\n" +
@@ -88,7 +88,7 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                 " PRIMARY KEY (dic_code) NOT ENFORCED\n" +
                 ")"+SqlUtil.getHbaseDDL("dim_base_dic"));
 
-//        tableEnv.executeSql("select * from base_dic").print();
+        //tableEnv.executeSql("select * from base_dic").print();
 
         // 4. 3张join: interval join 无需设置 ttl
         Table result = tableEnv.sqlQuery(
@@ -112,13 +112,12 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                         "od.split_total_amount split_payment_amount," +
                         "pi.ts_ms " +
                         "from payment_info pi " +
-                        "join dwd_trade_order_detail od " +
+                        "join dwd_order_info od " +
                         "on pi.order_id=od.order_id " +
                         "and od.time_ltz >= pi.time_ltz - interval '30' minute " +
                         "and od.time_ltz <= pi.time_ltz + interval '5' second " +
                         "join base_dic for system_time as of pi.proc_time as dic " +
                         "on pi.payment_type=dic.dic_code ");
-
         result.execute().print();
 
         // 6. 写出到 kafka 中

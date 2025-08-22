@@ -48,3 +48,7 @@ ali.key=
 ali.pwd=
 
 hive.conf.dir=C:\2210A\work1\Stream_test\stream_realtime\src\main\resources
+
+# Doris
+doris.fe.nodes=cdh01:8031
+doris.database=gmall2025_realtime

@@ -110,7 +110,7 @@ public class DbusDwdTradeOrderRefundToKafka {
                         "join base_dic for system_time as of ri.proc_time as dic2 " +
                         "on ri.refund_reason_type=dic2.dic_code ");
 
-        result.execute().print();
+        //result.execute().print();
 
         // 5. 写出到 kafka
         tableEnv.executeSql(
@@ -129,10 +129,10 @@ public class DbusDwdTradeOrderRefundToKafka {
                         "refund_reason_txt string," +
                         "refund_num string," +
                         "refund_amount string," +
-                        "ts bigint ," +
+                        "ts_ms bigint ," +
                         "primary key(id) not enforced " +
                         ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_REFUND));
 
-        ///result.executeInsert(DWD_TRADE_ORDER_REFUND);
+        result.executeInsert(DWD_TRADE_ORDER_REFUND);
     }
 }

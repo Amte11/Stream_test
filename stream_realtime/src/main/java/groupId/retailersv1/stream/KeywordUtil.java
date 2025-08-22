@@ -1,7 +1,9 @@
 package groupId.retailersv1.stream;
 
+
 import org.wltea.analyzer.core.IKSegmenter;
 import org.wltea.analyzer.core.Lexeme;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;

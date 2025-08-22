@@ -119,7 +119,7 @@ public class DbusDwdTradeRefundPaySucDetailToKafka {
                         "join base_dic for system_time as of rp.proc_time as dic " +
                         "on rp.payment_type=dic.dic_code ");
 
-        result.execute().print();
+        //result.execute().print();
 
         // 7.写出到 kafka
         tableEnv.executeSql("create table "+DWD_TRADE_REFUND_PAYMENT_SUCCESS+"(" +
@@ -134,9 +134,9 @@ public class DbusDwdTradeRefundPaySucDetailToKafka {
                 "callback_time string," +
                 "refund_num string," +
                 "refund_amount string," +
-                "ts bigint, " +
+                "ts_ms bigint, " +
                 "primary key(id) not enforced " +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_REFUND_PAYMENT_SUCCESS));
-        //result.executeInsert(DWD_TRADE_REFUND_PAYMENT_SUCCESS);
+        result.executeInsert(DWD_TRADE_REFUND_PAYMENT_SUCCESS);
     }
 }

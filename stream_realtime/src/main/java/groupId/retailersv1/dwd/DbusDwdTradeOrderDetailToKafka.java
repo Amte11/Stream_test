@@ -140,7 +140,7 @@ public class DbusDwdTradeOrderDetailToKafka {
                         "split_activity_amount string," +
                         "split_coupon_amount string," +
                         "split_total_amount string," +
-                        "ts bigint," +
+                        "ts_ms bigint," +
                         "primary key(id) not enforced " +
                         ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_DETAIL));
 

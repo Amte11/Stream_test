@@ -1,10 +1,12 @@
 package groupId.retailersv1.func;
 
+
 import groupId.retailersv1.stream.KeywordUtil;
 import org.apache.flink.table.annotation.DataTypeHint;
 import org.apache.flink.table.annotation.FunctionHint;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.types.Row;
+@FunctionHint(output = @DataTypeHint("ROW<word STRING>"))
 
 /**
  * Title: KeywordUDTF

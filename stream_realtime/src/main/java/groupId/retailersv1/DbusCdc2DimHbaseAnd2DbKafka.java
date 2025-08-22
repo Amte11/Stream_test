@@ -2,22 +2,35 @@ package groupId.retailersv1;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.bean.TableProcessDwd;
 import com.utils.ConfigUtils;
 import com.utils.EnvironmentSettingUtils;
+import com.utils.JdbcUtils;
 import com.utils.KafkaUtils;
 import com.ververica.cdc.connectors.mysql.source.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
-import groupId.retailersv1.func.MapUpdateHbaseDimTableFunc;
-import groupId.retailersv1.func.ProcessSpiltStreamToHBaseDimFunc;
 import groupId.retailersv1.stream.utils.CdcSourceUtils;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.ReadOnlyBroadcastState;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.api.datastream.BroadcastConnectedStream;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
+import org.apache.flink.util.Collector;
+
+import java.sql.Connection;
+import java.util.*;
+
 
 
 
@@ -29,96 +42,136 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * Description: cdc to dim
  */
 public class DbusCdc2DimHbaseAnd2DbKafka {
-    private static final String CDH_ZOOKEEPER_SERVER = ConfigUtils.getString("zookeeper.server.host.list");
-    private static final String CDH_KAFKA_SERVER = ConfigUtils.getString("kafka.bootstrap.servers");
-    private static final String CDH_HBASE_NAME_SPACE = ConfigUtils.getString("hbase.namespace");
-    private static final String MYSQL_CDC_TO_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
+    private static final String kafka_bootstrap_server = ConfigUtils.getString("kafka.bootstrap.servers");
+    private static final String ODS_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
 
     @SneakyThrows
     public static void main(String[] args) {
-
-        System.setProperty("HADOOP_USER_NAME","root");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         EnvironmentSettingUtils.defaultParameter(env);
 
-
-        MySqlSource<String> mySQLDbMainCdcSource = CdcSourceUtils.getMySQLCdcSource(
-                ConfigUtils.getString("mysql.database"),
-                "",
-                ConfigUtils.getString("mysql.user"),
-                ConfigUtils.getString("mysql.pwd"),
-                "2889-2990",
-                StartupOptions.initial()
+        // 创建kafka数据源
+        DataStreamSource<String> kafkaSourceDs = env.fromSource(
+                KafkaUtils.buildKafkaSource(
+                        kafka_bootstrap_server,
+                        ODS_KAFKA_TOPIC,
+                        new Date().toString(),
+                        OffsetsInitializer.earliest()
+                ), WatermarkStrategy.noWatermarks(), "read_kafka_realtime_db"
         );
+//        kafkaSourceDs.print() ;
 
-        // 读取配置库的变化binlog
-        MySqlSource<String> mySQLCdcDimConfSource = CdcSourceUtils.getMySQLCdcSource(
+        SingleOutputStreamOperator<JSONObject> jsonObjDs = kafkaSourceDs.process(new ProcessFunction<String, JSONObject>() {
+            @Override
+            public void processElement(String s, ProcessFunction<String, JSONObject>.Context context, Collector<JSONObject> collector) throws Exception {
+                try {
+                    JSONObject jsonObj = JSONObject.parseObject(s);
+                    collector.collect(jsonObj);
+                } catch (Exception e) {
+                    System.out.println("非标准JSON");
+                }
+            }
+        });
+        MySqlSource<String> mySQLCdcDwdConfSource = CdcSourceUtils.getMySQLCdcSource(
                 ConfigUtils.getString("mysql.databases.conf"),
-                "realtime_v1_config.table_process_dim",
+                "realtime_v1_config.table_process_dwd",
                 ConfigUtils.getString("mysql.user"),
                 ConfigUtils.getString("mysql.pwd"),
-                "5672-5884",
+                "10000-10050",
                 StartupOptions.initial()
+
         );
+        DataStreamSource<String> cdcDbDwdStream = env.fromSource(mySQLCdcDwdConfSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_dwd_source");
 
-        DataStreamSource<String> cdcDbMainStream = env.fromSource(mySQLDbMainCdcSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_main_source");
-        DataStreamSource<String> cdcDbDimStream = env.fromSource(mySQLCdcDimConfSource, WatermarkStrategy.noWatermarks(), "mysql_cdc_dim_source");
+        SingleOutputStreamOperator<TableProcessDwd> tpDs = cdcDbDwdStream.map(new MapFunction<String, TableProcessDwd>() {
+            @Override
+            public TableProcessDwd map(String jsonStr) throws Exception {
+                JSONObject jsonObj = JSONObject.parseObject(jsonStr);
+                String op = jsonObj.getString("op");
+                TableProcessDwd tp = null;
+                if ("d".equals(op)){
+                    tp = jsonObj.getObject("before", TableProcessDwd.class);
+                }else {
+                    tp = jsonObj.getObject("after", TableProcessDwd.class);
+                }
+                tp.setOp( op);
+                return tp;
+            }
+        });
+//        tpDs.print();
 
-//        cdcDbMainStream.print("cdcDbMainStream -> ");
-//        cdcDbDimStream.print("cdcDbDimStream -> ");
-        SingleOutputStreamOperator<JSONObject> cdcDbMainStreamMap = cdcDbMainStream.map(JSONObject::parseObject)
-                .uid("db_data_convert_json")
-                .name("db_data_convert_json")
-                .setParallelism(1);
+        MapStateDescriptor<String, TableProcessDwd> mapStateDescriptor = new MapStateDescriptor<>("mapStateDescriptor", String.class, TableProcessDwd.class);
+        BroadcastStream<TableProcessDwd> broadcastDs = tpDs.broadcast(mapStateDescriptor);
 
-        cdcDbMainStreamMap.map(JSONObject::toString)
-                .sinkTo(
-                        KafkaUtils.buildKafkaSink(CDH_KAFKA_SERVER, MYSQL_CDC_TO_KAFKA_TOPIC)
-                )
-                .uid("mysql_cdc_to_kafka_topic")
-                .name("mysql_cdc_to_kafka_topic");
+        BroadcastConnectedStream<JSONObject, TableProcessDwd> connectDs = jsonObjDs.connect(broadcastDs);
 
-        cdcDbMainStreamMap.print("cdcDbMainStreamMap -> ");
+        SingleOutputStreamOperator<Tuple2<JSONObject, TableProcessDwd>> splitDs = connectDs.process(
+                new BroadcastProcessFunction<JSONObject, TableProcessDwd, Tuple2<JSONObject, TableProcessDwd>>() {
+                    private Map<String, TableProcessDwd> configMap = new HashMap<>();
 
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        Connection connection = JdbcUtils.getMySQLConnection(
+                                ConfigUtils.getString("mysql.url"),
+                                ConfigUtils.getString("mysql.user"),
+                                ConfigUtils.getString("mysql.pwd"));
+                        String querySQL = "select * from realtime_v1_config.table_process_dwd";
+                        List<TableProcessDwd> tableProcessDwds = JdbcUtils.queryList(connection, querySQL, TableProcessDwd.class, true);
+                        for (TableProcessDwd tableProcessDwd : tableProcessDwds) {
+                            configMap.put(tableProcessDwd.getSourceTable(), tableProcessDwd);
+                        }
 
-
-        SingleOutputStreamOperator<JSONObject> cdcDbDimStreamMap = cdcDbDimStream.map(JSONObject::parseObject)
-                .uid("dim_data_convert_json")
-                .name("dim_data_convert_json")
-                .setParallelism(1);
-//        cdcDbDimStreamMap.print("cdcDbDimStreamMap -> ");
-
-        SingleOutputStreamOperator<JSONObject> cdcDbDimStreamMapCleanColumn = cdcDbDimStreamMap.map(s -> {
-                    s.remove("source");
-                    s.remove("transaction");
-                    JSONObject resJson = new JSONObject();
-                    if ("d".equals(s.getString("op"))){
-                        resJson.put("before",s.getJSONObject("before"));
-                    }else {
-                        resJson.put("after",s.getJSONObject("after"));
+                        connection.close();
                     }
-                    resJson.put("op",s.getString("op"));
-                    return resJson;
-                }).uid("clean_json_column_map")
-                .name("clean_json_column_map");
+
+                    @Override
+                    public void processElement(JSONObject jsonObj, BroadcastProcessFunction<JSONObject, TableProcessDwd, Tuple2<JSONObject, TableProcessDwd>>.ReadOnlyContext readOnlyContext, Collector<Tuple2<JSONObject, TableProcessDwd>> collector) throws Exception {
+//                        {"op":"r","after":{"category_level":3,"category_id":178,"create_time":1639440000000,"attr_name":"像素","id":73},"source":{"server_id":0,"version":"1.9.7.Final","file":"","connector":"mysql","pos":0,"name":"mysql_binlog_source","row":0,"ts_ms":0,"snapshot":"false","db":"realtime_v1","table":"base_attr_info"},"ts_ms":1755243556351}
+                        String tableName = jsonObj.getJSONObject("source").getString("table");
+                        ReadOnlyBroadcastState<String, TableProcessDwd> broadcastState = readOnlyContext.getBroadcastState(mapStateDescriptor);
+                        TableProcessDwd tp = null;
+                        if ((tp = broadcastState.get(tableName)) != null || (tp = configMap.get(tableName)) != null) {
+                            JSONObject after = jsonObj.getJSONObject("after");
+                            deleteNotNeedColumns(after, tp.getSinkColumns());
+                            after.put("ts", jsonObj.getLongValue("ts_ms"));
+                            collector.collect(Tuple2.of(after, tp));
+                        }
+
+                    }
+
+                    @Override
+                    public void processBroadcastElement(TableProcessDwd tp, BroadcastProcessFunction<JSONObject, TableProcessDwd, Tuple2<JSONObject, TableProcessDwd>>.Context context, Collector<Tuple2<JSONObject, TableProcessDwd>> collector) throws Exception {
+                        String op = tp.getOp();
+                        BroadcastState<String, TableProcessDwd> broadcastState = context.getBroadcastState(mapStateDescriptor);
+
+                        if ("d".equals(op)) {
+                            configMap.remove(tp.getSourceTable());
+                            broadcastState.remove(tp.getSourceTable());
+                        } else {
+                            configMap.put(tp.getSourceTable(), tp);
+                            broadcastState.put(tp.getSourceTable(), tp);
+                        }
+
+                    }
+
+                    @Override
+                    public void close() throws Exception {
+                        super.close();
+                    }
+                }
+        );
+        splitDs.print();
+        splitDs.sinkTo(KafkaUtils.getKafkaSinkDwd());
 
 
-        SingleOutputStreamOperator<JSONObject> tpDS = cdcDbDimStreamMapCleanColumn.map(new MapUpdateHbaseDimTableFunc(CDH_ZOOKEEPER_SERVER, CDH_HBASE_NAME_SPACE))
-                .uid("map_create_hbase_dim_table")
-                .name("map_create_hbase_dim_table");
-//        cdcDbDimStreamMapCleanColumn.print();
 
-
-
-        MapStateDescriptor<String, JSONObject> mapStageDesc = new MapStateDescriptor<>("mapStageDesc", String.class, JSONObject.class);
-        BroadcastStream<JSONObject> broadcastDs = tpDS.broadcast(mapStageDesc);
-        BroadcastConnectedStream<JSONObject, JSONObject> connectDs = cdcDbMainStreamMap.connect(broadcastDs);
-
-        connectDs.process(new ProcessSpiltStreamToHBaseDimFunc(mapStageDesc));
-
-
-
-        env.disableOperatorChaining();
         env.execute();
+
+    }
+
+    private static void deleteNotNeedColumns(JSONObject jsonObj, String sinkColumns) {
+        List<String> columnList = Arrays.asList(sinkColumns.split(","));
+        Set<Map.Entry<String, Object>> entrySet = jsonObj.entrySet();
+        entrySet.removeIf(entry -> !columnList.contains(entry.getKey()));
     }
 }

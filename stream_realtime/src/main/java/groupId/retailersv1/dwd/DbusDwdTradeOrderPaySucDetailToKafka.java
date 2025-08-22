@@ -57,8 +57,8 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                         "split_activity_amount string," +
                         "split_coupon_amount string," +
                         "split_total_amount string," +
-                        "ts bigint ," +
-                        " time_ltz AS TO_TIMESTAMP_LTZ(ts, 3),\n" +
+                        "ts_ms bigint ," +
+                        " time_ltz AS TO_TIMESTAMP_LTZ(ts_ms, 3),\n" +
                         " WATERMARK FOR time_ltz AS time_ltz - INTERVAL '5' SECOND" +
                         ")" + SqlUtil.getKafka(DWD_TRADE_ORDER_DETAIL, "retailersv_dwd_trade_payment_success"));
 
@@ -118,7 +118,7 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                         "and od.time_ltz <= pi.time_ltz + interval '5' second " +
                         "join base_dic for system_time as of pi.proc_time as dic " +
                         "on pi.payment_type=dic.dic_code ");
-        result.execute().print();
+        //result.execute().print();
 
         // 6. 写出到 kafka 中
         tableEnv.executeSql("create table "+DWD_TRADE_ORDER_PAYMENT_SUCCESS+"(" +
@@ -139,11 +139,11 @@ public class DbusDwdTradeOrderPaySucDetailToKafka {
                 "split_activity_amount string," +
                 "split_coupon_amount string," +
                 "split_payment_amount string," +
-                "ts bigint ," +
+                "ts_ms bigint ," +
                 "primary key(order_detail_id) not enforced " +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_PAYMENT_SUCCESS));
 
-        //result.executeInsert(DWD_TRADE_ORDER_PAYMENT_SUCCESS);
+        result.executeInsert(DWD_TRADE_ORDER_PAYMENT_SUCCESS);
 
     }
 }

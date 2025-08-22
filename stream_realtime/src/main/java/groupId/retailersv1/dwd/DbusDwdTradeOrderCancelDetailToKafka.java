@@ -58,7 +58,7 @@ public class DbusDwdTradeOrderCancelDetailToKafka {
                 "  AND `after`['order_status'] = '1003'");
 
         tableEnv.createTemporaryView("order_cancel", orderCancel);
-       // orderCancel.execute().print(); // 看是否输出
+        //orderCancel.execute().print(); // 看是否输出
 
 
         // 4. 创建 DWD 下单明细表（来自 Kafka）
@@ -80,14 +80,14 @@ public class DbusDwdTradeOrderCancelDetailToKafka {
                         "split_activity_amount string," +
                         "split_coupon_amount string," +
                         "split_total_amount string," +
-                        "ts bigint " +
+                        "ts_ms bigint " +
                         ")" + SqlUtil.getKafka(DWD_TRADE_ORDER_DETAIL, "retailersv1_dwd_order_cancel_detail"));
         // 可选：调试
-        //tableEnv.sqlQuery("SELECT * FROM dwd_trade_order_detail ").execute().print();
+       //tableEnv.sqlQuery("SELECT * FROM dwd_trade_order_detail ").execute().print();
 
         // 5. 关联：订单明细 + 取消事件
         Table result = tableEnv.sqlQuery(
-                "select  " +
+                    "select  " +
                         "od.id," +
                         "od.order_id," +
                         "od.user_id," +
@@ -97,7 +97,7 @@ public class DbusDwdTradeOrderCancelDetailToKafka {
                         "od.activity_id," +
                         "od.activity_rule_id," +
                         "od.coupon_id," +
-                        "date_format(FROM_UNIXTIME(cast(oc.operate_time as bigint) / 1000), 'yyyy-MM-dd') order_cancel_date_id," +
+                        "date_format(FROM_UNIXTIME(cast(oc.operate_time as bigint) / 1000), 'yyyy-MM-dd') date_id," +
                         "oc.operate_time," +
                         "od.sku_num," +
                         "od.split_original_amount," +
@@ -110,7 +110,7 @@ public class DbusDwdTradeOrderCancelDetailToKafka {
                         "on od.order_id=oc.id ");
 
         // 可选：调试输出结果
-         result.execute().print();
+        //result.execute().print();
 
         // 6. 创建 DWD 取消订单明细结果表（Upsert Kafka）
         tableEnv.executeSql(
@@ -131,10 +131,10 @@ public class DbusDwdTradeOrderCancelDetailToKafka {
                         "split_activity_amount STRING, " +
                         "split_coupon_amount STRING, " +
                         "split_total_amount STRING, " +
-                        "ts BIGINT" +
+                        "ts_ms BIGINT" +
                         ") " + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_CANCEL_DETAIL));
 
         // 7. 写入结果
-        //result.executeInsert(DWD_TRADE_ORDER_CANCEL_DETAIL);
+        result.executeInsert(DWD_TRADE_ORDER_CANCEL_DETAIL);
     }
 }

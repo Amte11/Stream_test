@@ -79,7 +79,7 @@ public class DbusDwdCommonInfoToKafka {
                 "      appraise CHAR(32),\n" +
                 "      appraise_name string,\n" +
                 "      comment_txt string,\n" +
-                "      ts BIGINT,\n" +
+                "      ts_ms BIGINT,\n" +
                 "  PRIMARY KEY (id) NOT ENFORCED\n" +
                 ")"+SqlUtil.getUpsertKafkaDDL(DWD_COMMENT_INFO));
 

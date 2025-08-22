@@ -54,7 +54,7 @@ public class DbusDwdTradeCartAddToKafka {
                 "      user_id string,\n" +
                 "      sku_id string,\n" +
                 "      sku_num INT,\n" +
-                "      ts BIGINT,\n" +
+                "      ts_ms BIGINT,\n" +
                 "  PRIMARY KEY (id) NOT ENFORCED\n" +
                 ")"+SqlUtil.getUpsertKafkaDDL(DWD_CART_INFO));
         cartInfo.executeInsert(DWD_CART_INFO);

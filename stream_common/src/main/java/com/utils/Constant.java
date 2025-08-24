@@ -18,6 +18,6 @@ public class Constant {
     public static final String KAFKA_BOOTSTRAP_SERVERS = "cdh01:9092,cdh02:9092"; // Kafka集群地址
 
     // Doris相关
-    public static final String DORIS_DATABASE = " gmall2025_realtime"; // Doris数据库名
+    public static final String DORIS_DATABASE = "gmall2025_realtime"; // Doris数据库名
     public static final String DORIS_FE_NODES = "cdh01:8031"; // Doris FE节点
 }

@@ -19,6 +19,7 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.flink.runtime.state.memory.MemoryStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -47,6 +48,7 @@ import java.util.Date;
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         EnvironmentSettingUtils.defaultParameter(env);
+        env.setStateBackend(new MemoryStateBackend());
 
         DataStreamSource<String> kafkaSourceDs = env.fromSource(
                 KafkaUtils.buildKafkaSource(
@@ -150,8 +152,6 @@ import java.util.Date;
         reduceDs.print();
         reduceDs.map(new BeanToJsonStrMapFunction<TrafficPageViewBean>())
                 .sinkTo(DorisUtils.getDorisSink("dws_traffic_vc_ch_ar_is_new_page_view_window"));
-
-
 
         env.execute();
     }

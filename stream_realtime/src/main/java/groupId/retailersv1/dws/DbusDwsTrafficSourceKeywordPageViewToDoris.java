@@ -81,26 +81,26 @@ public class DbusDwsTrafficSourceKeywordPageViewToDoris {
                         "FROM table(tumble(table keyword_table, descriptor(et), interval '5' SECOND  )) \n" +
                         "GROUP BY window_start, window_end, keyword"
         );
-       // result.execute().print();
+       //result.execute().print();
 
         // 5. 写出到 doris 中
         tableEnv.executeSql("create table dws_traffic_source_keyword_page_view_window(" +
-                "  stt string, " +  // 2023-07-11 14:14:14
+                "  stt string, " +
                 "  edt string, " +
                 "  cur_date string, " +
                 "  keyword string, " +
                 "  keyword_count bigint " +
-                ")with(" +
+                ") with (" +
                 " 'connector' = 'doris'," +
                 " 'fenodes' = '" + DORIS_FE_NODES + "'," +
-                "  'table.identifier' = '" + DORIS_DATABASE + ".dws_traffic_source_keyword_page_view_window'," +
-                "  'username' = 'root'," +
-                "  'password' = '', " +
-                "  'sink.properties.format' = 'json', " +
-                "  'sink.buffer-count' = '4', " +
-                "  'sink.buffer-size' = '4086'," +
-                "  'sink.enable-2pc' = 'false', " + // 测试阶段可以关闭两阶段提交,方便测试
-                "  'sink.properties.read_json_by_line' = 'true' " +
+                " 'table.identifier' = '" + DORIS_DATABASE + ".dws_traffic_source_keyword_page_view_window'," +
+                " 'username' = 'root'," +
+                " 'password' = '', " +
+                " 'sink.properties.format' = 'json', " +
+                " 'sink.properties.read_json_by_line' = 'true', " +
+                " 'sink.buffer-count' = '4', " +
+                " 'sink.buffer-size' = '4086'," +
+                " 'sink.enable-2pc' = 'false' " +
                 ")");
         result.executeInsert("dws_traffic_source_keyword_page_view_window");
 

@@ -24,26 +24,28 @@ public class DorisUtils {
         Properties props = new Properties();
         props.setProperty("format", "json");
         props.setProperty("read_json_by_line", "true"); // 每行一条 json 数据
+
         DorisSink<String> sink = DorisSink.<String>builder()
                 .setDorisReadOptions(DorisReadOptions.builder().build())
-                .setDorisOptions(DorisOptions.builder() // 设置 doris 的连接参数
+                .setDorisOptions(DorisOptions.builder()
                         .setFenodes(DORIS_FE_NODES)
                         .setTableIdentifier(DORIS_DATABASE + "." + table)
                         .setUsername("root")
                         .setPassword("")
                         .build()
                 )
-                .setDorisExecutionOptions(DorisExecutionOptions.builder() // 执行参数
-//                        .setLabelPrefix(labelPrefix)  // stream-load 导入数据时 label 的前缀
-                        .disable2PC() // 开启两阶段提交后,labelPrefix 需要全局唯一,为了测试方便禁用两阶段提交
-                        .setBufferCount(3) // 批次条数: 默认 3
-                        .setBufferSize(1024 * 1024) // 批次大小: 默认 1M
-                        .setCheckInterval(3000) // 批次输出间隔  上述三个批次的限制条件是或的关系
+                .setDorisExecutionOptions(DorisExecutionOptions.builder()
+                        .disable2PC()
+                        .setBufferCount(3)
+                        .setBufferSize(1024 * 1024)
+                        .setCheckInterval(3000)
                         .setMaxRetries(3)
-                        .setStreamLoadProp(props) // 设置 stream load 的数据格式 默认是 csv,需要改成 json
+                        .setStreamLoadProp(props)
                         .build())
-                .setSerializer(new SimpleStringSerializer())
+                .setSerializer(new SimpleStringSerializer()) // 修复点：显式实例化
                 .build();
+
         return sink;
     }
+
 }

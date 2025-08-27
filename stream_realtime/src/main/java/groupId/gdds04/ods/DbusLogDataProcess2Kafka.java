@@ -1,4 +1,4 @@
-package groupId.retailersv1;
+package groupId.gdds04.ods;
 
 import com.alibaba.fastjson.JSONObject;
 import com.utils.*;
@@ -27,7 +27,7 @@ import java.util.HashMap;
  * Title: DbusLogDataProcess2Kafka
  * Author: hyx
  * Package: groupId.retailersv1
- * Date: 2025/8/15 17:16
+ * Date: 2025/8/26 17:16
  * Description: read kafka log to split
  */
 public class DbusLogDataProcess2Kafka {

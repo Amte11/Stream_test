@@ -3,9 +3,9 @@ env=dev
 # MySQL 本地开发配置
 mysql.host=192.168.142.132
 mysql.port=3306
-mysql.url=jdbc:mysql://cdh01:3306/gd_gmall_04?useSSL=false&serverTimezone=Asia/Shanghai
+mysql.url=jdbc:mysql://cdh01:3306/realtime_v1?useSSL=false&serverTimezone=Asia/Shanghai
 mysql.timezone=Asia/Shanghai
-mysql.database=gd_gmall_04
+mysql.database=realtime_v1
 mysql.user=root
 mysql.pwd=root
 mysql.databases.conf=realtime_v1_config
@@ -36,18 +36,30 @@ zookeeper.server.host.list=cdh01:2181
 hbase.namespace=realtime
 
 FlinkGd4.ods.all.data.topic=FlinkGd4_ods_all_data
-kafka.ods.channel.config_info.topic=FlinkGd04_ods_channel_config_info
-kafka.ods.collect.info_detail.topic=FlinkGd04_ods_collect_info_detail
-kafka.ods.consult.info_detail.topic=FlinkGd04_ods_consult_info_detail
-kafka.ods.customer.info.topic=FlinkGd04_ods_customer_info
-kafka.ods.goods.info.topic=FlinkGd04_ods_goods_info
-kafka.ods.membership.info.detail.topic=FlinkGd04_ods_membership_info_detail
-kafka.ods.payment.info.detail.topic=FlinkGd04_ods_payment_info_detail
-kafka.ods.popularity.broadcastinfo.detail.topic=FlinkGd04_ods_popularity_broadcastinfo_detail
-kafka.ods.search.info.detail.topic=FlinkGd04_ods_search_info_detail
-kafka.ods.shop.info.topic=FlinkGd04_ods_shop_info
-kafka.ods.visitor.info.detail.topic=FlinkGd04_ods_visitor_info_detail
-kafka.ods.z.log.topic=FlinkGd04_ods_z_log
+kafka.ods.channel.config_info.topic=ods_channel_config_info
+kafka.ods.collect.info_detail.topic=ods_collect_info_detail
+kafka.ods.consult.info_detail.topic=ods_consult_info_detail
+kafka.ods.customer.info.topic=ods_customer_info
+kafka.ods.goods.info.topic=ods_goods_info
+kafka.ods.membership.info.detail.topic=ods_membership_info_detail
+kafka.ods.payment.info.detail.topic=ods_payment_info_detail
+kafka.ods.popularity.broadcastinfo.detail.topic=ods_popularity_broadcastinfo_detail
+kafka.ods.search.info.detail.topic=ods_search_info_detail
+kafka.ods.shop.info.topic=ods_shop_info
+kafka.ods.visitor.info.detail.topic=ods_visitor_info_detail
+
+
+kafka.dwd.channel.config_info.topic=dwd_channel_config_info
+kafka.dwd.collect.info_detail.topic=dwd_collect_info_detail
+kafka.dwd.consult.info_detail.topic=dwd_consult_info_detail
+kafka.dwd.customer.info.topic=dwd_customer_info
+kafka.dwd.goods.info.topic=dwd_goods_info
+kafka.dwd.membership.info.detail.topic=dwd_membership_info_detail
+kafka.dwd.payment.info.detail.topic=dwd_payment_info_detail
+kafka.dwd.popularity.broadcastinfo.detail.topic=dwd_popularity_broadcastinfo_detail
+kafka.dwd.search.info.detail.topic=dwd_search_info_detail
+kafka.dwd.shop.info.topic=dwd_shop_info
+kafka.dwd.visitor.info.detail.topic=dwd_visitor_info_detail
 
 kafka.dwd.user.visit.detail=FlinkGd03_dwd_user_visit_detail
 
